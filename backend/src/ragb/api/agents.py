@@ -21,7 +21,7 @@ MODES = ("off", "auto", "agentic")
 
 
 def agent_json(a: Agent, repo_ids: list[uuid.UUID] | None = None) -> dict:
-    return {"id": str(a.id), "name": a.name, "description": a.description, "emoji": a.emoji,
+    return {"id": str(a.id), "name": a.name, "description": a.description,
             "system_prompt": a.system_prompt, "provider": a.provider, "model": a.model,
             "temperature": a.temperature, "max_tokens": a.max_tokens, "retrieval_mode": a.retrieval_mode,
             "top_k": a.top_k, "settings": a.settings or {}, "enabled": a.enabled,
@@ -32,7 +32,6 @@ def agent_json(a: Agent, repo_ids: list[uuid.UUID] | None = None) -> dict:
 class AgentIn(BaseModel):
     name: str
     description: str = ""
-    emoji: str = "🤖"
     system_prompt: str = ""
     provider: str = ""
     model: str = ""
@@ -92,7 +91,7 @@ async def create_agent(body: AgentIn, request: Request, user: User = Depends(cur
         raise ValidationFailed("사용 가능한 모델이 없습니다. 관리자에게 문의하세요", code="no_model")
     mode = body.retrieval_mode if body.retrieval_mode in MODES else await S.get(db, "chat.default_retrieval_mode")
     agent = Agent(owner_id=user.id, name=body.name[:120], description=body.description[:2000],
-                  emoji=(body.emoji or "🤖")[:8], system_prompt=body.system_prompt[:8000],
+                  system_prompt=body.system_prompt[:8000],
                   provider=row.provider, model=row.model_id, temperature=max(0.0, min(2.0, body.temperature)),
                   max_tokens=max(256, min(64000, body.max_tokens)), retrieval_mode=mode,
                   top_k=max(1, min(20, body.top_k)), settings=body.settings or {})
@@ -117,7 +116,7 @@ async def update_agent(agent_id: uuid.UUID, body: AgentIn, user: User = Depends(
     agent = await _owned(db, user, agent_id)
     row, _ = await catalog.resolve(db, body.provider or agent.provider, body.model or agent.model)
     agent.name = body.name[:120] or agent.name
-    agent.description, agent.emoji = body.description[:2000], (body.emoji or agent.emoji)[:8]
+    agent.description = body.description[:2000]
     agent.system_prompt = body.system_prompt[:8000]
     if row is not None:
         agent.provider, agent.model = row.provider, row.model_id

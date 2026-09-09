@@ -12,7 +12,7 @@ export interface StorageNode {
 }
 
 export interface Agent {
-  id: string; name: string; description: string; emoji: string; system_prompt: string;
+  id: string; name: string; description: string; system_prompt: string;
   provider: string; model: string; temperature: number; max_tokens: number;
   retrieval_mode: "off" | "auto" | "agentic"; top_k: number; settings: Record<string, unknown>;
   enabled: boolean; repository_ids: string[]; created_at: string | null;

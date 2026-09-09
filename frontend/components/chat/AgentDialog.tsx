@@ -25,7 +25,6 @@ export function AgentDialog({ agent, onClose, onSaved }:
   const [form, setForm] = useState({
     name: agent?.name ?? "",
     description: agent?.description ?? "",
-    emoji: agent?.emoji ?? "🤖",
     system_prompt: agent?.system_prompt ?? "",
     provider: agent?.provider ?? "",
     model: agent?.model ?? "",
@@ -78,16 +77,10 @@ export function AgentDialog({ agent, onClose, onSaved }:
           </div>
 
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4">
-            <div className="flex gap-2">
-              <div className="w-16">
-                <Field label="아이콘"><Input value={form.emoji} maxLength={4} className="text-center"
-                  onChange={(e) => setForm({ ...form, emoji: e.target.value })} /></Field>
-              </div>
-              <div className="flex-1">
-                <Field label="이름"><Input value={form.name} placeholder="예: 사내 규정 도우미"
-                  onChange={(e) => setForm({ ...form, name: e.target.value })} /></Field>
-              </div>
-            </div>
+            <Field label="이름">
+              <Input value={form.name} placeholder="예: 사내 규정 도우미"
+                onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            </Field>
 
             <Field label="모델" hint="공개 API로 접근 가능한 모델만 노출됩니다.">
               <Select value={`${form.provider}::${form.model}`}

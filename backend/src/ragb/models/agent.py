@@ -14,7 +14,6 @@ class Agent(Base, IdMixin, TimestampMixin):
     owner_id: Mapped[uuid.UUID] = owner_col()
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     description: Mapped[str] = mapped_column(Text, default="", server_default="")
-    emoji: Mapped[str] = mapped_column(String(8), default="🤖", server_default="🤖")
     system_prompt: Mapped[str] = mapped_column(Text, default="", server_default="")
     provider: Mapped[str] = mapped_column(String(32), default="claude_code", server_default="claude_code")
     model: Mapped[str] = mapped_column(String(120), default="", server_default="")

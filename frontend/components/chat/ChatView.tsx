@@ -122,7 +122,6 @@ export function ChatView() {
             <button key={a.id} onClick={() => setAgentId(a.id)}
               className={clsx("group mb-0.5 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left transition-colors",
                 agentId === a.id ? "bg-accent-soft" : "hover:bg-muted")}>
-              <span className="text-base">{a.emoji}</span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-[13px] font-medium">{a.name}</span>
                 <span className="block truncate text-[11px] text-[#8b949e]">
@@ -179,7 +178,6 @@ export function ChatView() {
         ) : (
           <>
             <header className="flex h-12 shrink-0 items-center gap-2 border-b border-line bg-white px-4">
-              <span>{agent.emoji}</span>
               <span className="text-[14px] font-medium">{agent.name}</span>
               <Badge tone="accent">{MODE_LABEL[agent.retrieval_mode]}</Badge>
               <Badge>{agent.model}</Badge>
