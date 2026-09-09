@@ -1,0 +1,49 @@
+[project]
+name = "ragb"
+version = "0.1.0"
+description = "RAG Backborn — hierarchical storage + semantic search backbone"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+  "sqlalchemy[asyncio]>=2.0.36",
+  "asyncpg>=0.30",
+  "alembic>=1.14",
+  "pgvector>=0.3.6",
+  "pydantic>=2.9",
+  "pydantic-settings>=2.6",
+  "argon2-cffi>=23.1",
+  "pyjwt>=2.9",
+  "cryptography>=43",
+  "httpx>=0.27",
+  "structlog>=24",
+  "python-multipart>=0.0.12",
+  "boto3>=1.35",
+  "tiktoken>=0.8",
+  "pypdf>=5",
+  "python-docx>=1.1",
+  "python-pptx>=1.0",
+  "openpyxl>=3.1",
+  "beautifulsoup4>=4.12",
+  "readability-lxml>=0.8",
+  "lxml>=5",
+  "uuid7>=0.1",
+  "email-validator>=2",
+]
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-asyncio>=0.24", "ruff>=0.6"]
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+[tool.hatch.build.targets.wheel]
+packages = ["src/ragb"]
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+testpaths = ["tests"]
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+[tool.ruff.lint]
+select = ["E","F","I","B","UP"]
+ignore = ["E501","B008"]

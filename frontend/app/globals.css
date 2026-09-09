@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #0d1117;
+  --color-surface: #ffffff;
+  --color-muted: #f6f7f9;
+  --color-line: #e3e6ea;
+  --color-accent: #2f6df6;
+  --color-accent-soft: #eaf0ff;
+  --font-sans: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+}
+
+:root { color-scheme: light; }
+
+html, body { height: 100%; }
+body {
+  background: var(--color-muted);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+* { scrollbar-width: thin; scrollbar-color: #c8ccd2 transparent; }
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-thumb { background: #c8ccd2; border-radius: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+
+.prose-chat { line-height: 1.72; word-break: break-word; }
+.prose-chat > * + * { margin-top: 0.75rem; }
+.prose-chat h1, .prose-chat h2, .prose-chat h3 { font-weight: 650; margin-top: 1.25rem; }
+.prose-chat h1 { font-size: 1.15rem; }
+.prose-chat h2 { font-size: 1.06rem; }
+.prose-chat h3 { font-size: 1rem; }
+.prose-chat ul { list-style: disc; padding-left: 1.2rem; }
+.prose-chat ol { list-style: decimal; padding-left: 1.35rem; }
+.prose-chat li + li { margin-top: 0.25rem; }
+.prose-chat code { background: var(--color-muted); padding: 0.1rem 0.32rem; border-radius: 4px; font-size: 0.88em; }
+.prose-chat pre { background: #0d1117; color: #e6edf3; padding: 0.85rem 1rem; border-radius: 10px; overflow-x: auto; }
+.prose-chat pre code { background: transparent; padding: 0; color: inherit; }
+.prose-chat table { width: 100%; border-collapse: collapse; font-size: 0.9em; display: block; overflow-x: auto; }
+.prose-chat th, .prose-chat td { border: 1px solid var(--color-line); padding: 0.4rem 0.6rem; text-align: left; }
+.prose-chat blockquote { border-left: 3px solid var(--color-line); padding-left: 0.9rem; color: #55606e; }
+.prose-chat a { color: var(--color-accent); text-decoration: underline; }
+
+@keyframes ragb-pulse { 0%, 100% { opacity: 0.35 } 50% { opacity: 1 } }
+.pulse-dot { animation: ragb-pulse 1.2s ease-in-out infinite; }
