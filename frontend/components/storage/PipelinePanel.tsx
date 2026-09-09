@@ -17,7 +17,8 @@ const STATUS_TONE: Record<string, "ok" | "warn" | "bad" | "accent" | "neutral"> 
  *
  *  단계는 다섯 종류(수집 → 구조화 → 평가 → 매칭 → 산출물)이고, 순서는 실행 순서가 아니라
  *  읽는 순서다. 실행은 단계별 수동 — 자동 스케줄은 백본이 정할 문제가 아니다. */
-export function PipelinePanel({ repoId, files }: { repoId: string; files: StorageNode[] }) {
+export function PipelinePanel({ repoId, canWrite, files }:
+  { repoId: string; canWrite: boolean; files: StorageNode[] }) {
   const [specs, setSpecs] = useState<PluginSpec[] | null>(null);
   const [bindings, setBindings] = useState<Binding[]>([]);
   const [runs, setRuns] = useState<PluginRun[]>([]);
@@ -73,14 +74,16 @@ export function PipelinePanel({ repoId, files }: { repoId: string; files: Storag
               쌓으면 문서가 레코드가 되고, 점수와 매칭 후보를 거쳐 Evidence Card 로 다시 저장소에 들어옵니다.
             </p>
           </div>
-          <Button size="sm" onClick={() => setPicking(true)}><Plus className="size-3.5" />단계 추가</Button>
+          {canWrite && <Button size="sm" onClick={() => setPicking(true)}><Plus className="size-3.5" />단계 추가</Button>}
         </Card>
 
         {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-[13px] text-red-600">{error}</p>}
 
         {!bindings.length ? (
           <Empty title="아직 단계가 없습니다"
-            hint="[단계 추가]에서 플러그인을 골라 이 저장소에 붙이세요. 각 플러그인은 필요한 설정만 물어봅니다." />
+            hint={canWrite
+              ? "[단계 추가]에서 플러그인을 골라 이 저장소에 붙이세요. 각 플러그인은 필요한 설정만 물어봅니다."
+              : "이 저장소는 읽기 전용입니다. 소유자만 단계를 추가하고 실행할 수 있습니다."} />
         ) : (
           <div className="space-y-2">
             {bindings.map((b) => {
@@ -101,13 +104,17 @@ export function PipelinePanel({ repoId, files }: { repoId: string; files: Storag
                     {last && <Badge tone={STATUS_TONE[last.status] ?? "neutral"}>
                       {busy ? <span className="pulse-dot">실행 중</span> : last.status}
                     </Badge>}
-                    <Button size="sm" variant="outline" busy={busy} onClick={() => runNow(b)}>
-                      <Play className="size-3.5" />실행
-                    </Button>
-                    <button onClick={() => spec && setEditing({ binding: b, spec })}
-                      className="rounded p-1.5 text-[#8b949e] hover:bg-muted"><Settings2 className="size-3.5" /></button>
-                    <button onClick={() => remove(b)}
-                      className="rounded p-1.5 text-[#c1c7cd] hover:text-red-500"><Trash2 className="size-3.5" /></button>
+                    {canWrite && (
+                      <>
+                        <Button size="sm" variant="outline" busy={busy} onClick={() => runNow(b)}>
+                          <Play className="size-3.5" />실행
+                        </Button>
+                        <button onClick={() => spec && setEditing({ binding: b, spec })}
+                          className="rounded p-1.5 text-[#8b949e] hover:bg-muted"><Settings2 className="size-3.5" /></button>
+                        <button onClick={() => remove(b)}
+                          className="rounded p-1.5 text-[#c1c7cd] hover:text-red-500"><Trash2 className="size-3.5" /></button>
+                      </>
+                    )}
                   </div>
                   {last && (last.summary || last.error) && (
                     <p className={clsx("mt-2 rounded-lg px-2.5 py-1.5 text-[12px]",

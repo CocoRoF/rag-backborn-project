@@ -32,10 +32,13 @@ def node_json(n: StorageNode) -> dict:
             "updated_at": n.updated_at.isoformat() if n.updated_at else None}
 
 
-def repo_json(r) -> dict:
+def repo_json(r, user: User | None = None) -> dict:
     return {"id": str(r.id), "name": r.name, "slug": r.slug, "description": r.description,
             "visibility": r.visibility, "settings": r.settings or {}, "file_count": r.file_count,
             "chunk_count": r.chunk_count, "bytes_total": r.bytes_total, "owner_id": str(r.owner_id),
+            # A shared repository is readable by everyone and writable by its owner. The UI
+            # needs to know which, or it offers buttons the server will refuse.
+            "can_write": bool(user and (r.owner_id == user.id or user.is_admin)),
             "created_at": r.created_at.isoformat() if r.created_at else None}
 
 
@@ -49,7 +52,7 @@ class RepoIn(BaseModel):
 @router.get("")
 async def list_repositories(user: User = Depends(current_user), db: AsyncSession = Depends(get_session)):
     repos = await ST.visible_repositories(db, user)
-    return {"items": [repo_json(r) for r in repos], "embedding_ready": await embedding_available(db)}
+    return {"items": [repo_json(r, user) for r in repos], "embedding_ready": await embedding_available(db)}
 
 
 @router.post("")
@@ -63,13 +66,13 @@ async def create_repository(body: RepoIn, request: Request, user: User = Depends
     audit.record(db, "repository.create", actor_id=user.id, target_type="repository", target_id=repo.id,
                  ip=client_ip(request), meta={"name": repo.name})
     await db.commit()
-    return repo_json(repo)
+    return repo_json(repo, user)
 
 
 @router.get("/{repo_id}")
 async def get_repository(repo_id: uuid.UUID, user: User = Depends(current_user),
                          db: AsyncSession = Depends(get_session)):
-    return repo_json(await ST.get_repository(db, user, repo_id))
+    return repo_json(await ST.get_repository(db, user, repo_id), user)
 
 
 @router.patch("/{repo_id}")
@@ -81,7 +84,7 @@ async def update_repository(repo_id: uuid.UUID, body: RepoIn, user: User = Depen
         repo.visibility = body.visibility
     repo.settings = body.settings or {}
     await db.commit()
-    return repo_json(repo)
+    return repo_json(repo, user)
 
 
 @router.delete("/{repo_id}")
@@ -103,7 +106,7 @@ async def list_nodes(repo_id: uuid.UUID, parent_id: uuid.UUID | None = None, use
     repo = await ST.get_repository(db, user, repo_id)
     parent = await ST.get_node(db, repo, parent_id) if parent_id else None
     children = await ST.list_children(db, repo, parent_id)
-    return {"repository": repo_json(repo), "parent": node_json(parent) if parent else None,
+    return {"repository": repo_json(repo, user), "parent": node_json(parent) if parent else None,
             "breadcrumbs": await ST.breadcrumbs(db, repo, parent), "items": [node_json(n) for n in children]}
 
 

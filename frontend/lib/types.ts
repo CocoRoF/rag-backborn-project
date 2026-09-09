@@ -1,7 +1,7 @@
 export interface Repository {
   id: string; name: string; slug: string; description: string; visibility: "private" | "shared";
   settings: Record<string, unknown>; file_count: number; chunk_count: number; bytes_total: number;
-  owner_id: string; created_at: string | null;
+  owner_id: string; can_write: boolean; created_at: string | null;
 }
 
 export interface StorageNode {

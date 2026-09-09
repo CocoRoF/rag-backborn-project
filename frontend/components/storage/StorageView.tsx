@@ -142,10 +142,12 @@ export function StorageView() {
                   {r.file_count}개 파일 · {r.chunk_count}조각 · {bytes(r.bytes_total)}
                 </span>
               </span>
-              <span onClick={(e) => { e.stopPropagation(); removeRepo(r); }}
-                className="hidden rounded p-1 text-[#c1c7cd] hover:text-red-500 group-hover:block">
-                <Trash2 className="size-3.5" />
-              </span>
+              {r.can_write && (
+                <span onClick={(e) => { e.stopPropagation(); removeRepo(r); }}
+                  className="hidden rounded p-1 text-[#c1c7cd] hover:text-red-500 group-hover:block">
+                  <Trash2 className="size-3.5" />
+                </span>
+              )}
             </button>
           ))}
           {!repos.length && <p className="px-2 py-6 text-center text-[12.5px] text-[#8b949e]">저장소가 없습니다.</p>}
@@ -175,7 +177,8 @@ export function StorageView() {
                   </button>
                 ))}
               </div>
-              <div className={clsx("ml-auto flex gap-1.5", tab !== "files" && "hidden")}>
+              {!repo.can_write && <Badge tone="neutral">읽기 전용 · 공유 저장소</Badge>}
+              <div className={clsx("ml-auto flex gap-1.5", (tab !== "files" || !repo.can_write) && "hidden")}>
                 <Button size="sm" variant="outline" onClick={reindex}><RefreshCw className="size-3.5" />전체 재색인</Button>
                 <Button size="sm" variant="outline" onClick={addFolder}><FolderPlus className="size-3.5" />폴더</Button>
                 <Button size="sm" busy={uploading} onClick={() => fileRef.current?.click()}>
@@ -189,7 +192,8 @@ export function StorageView() {
             {tab === "search" ? (
               <SearchPanel repoId={repo.id} />
             ) : tab === "pipeline" ? (
-              <PipelinePanel repoId={repo.id} files={(tree?.items ?? []).filter((n) => n.kind === "file")} />
+              <PipelinePanel repoId={repo.id} canWrite={repo.can_write}
+                files={(tree?.items ?? []).filter((n) => n.kind === "file")} />
             ) : tab === "records" ? (
               <RecordsPanel repoId={repo.id} />
             ) : (
@@ -223,10 +227,12 @@ export function StorageView() {
                           </span>
                         </button>
                         {n.kind === "file" && <Badge tone={STATUS[n.status]?.tone}>{STATUS[n.status]?.label ?? n.status}</Badge>}
-                        <button onClick={() => removeNode(n)}
-                          className="hidden rounded p-1 text-[#c1c7cd] hover:text-red-500 group-hover:block">
-                          <Trash2 className="size-3.5" />
-                        </button>
+                        {repo.can_write && (
+                          <button onClick={() => removeNode(n)}
+                            className="hidden rounded p-1 text-[#c1c7cd] hover:text-red-500 group-hover:block">
+                            <Trash2 className="size-3.5" />
+                          </button>
+                        )}
                       </div>
                     ))}
                     {!(tree?.items ?? []).length && (
