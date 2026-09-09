@@ -35,7 +35,10 @@ async def status(db: AsyncSession = Depends(get_session)):
     return {"bootstrap_needed": await A.user_count(db) == 0,
             "signup_mode": await S.get(db, "signup.mode"),
             "service_name": await S.get(db, "branding.service_name"),
-            "tagline": await S.get(db, "branding.tagline")}
+            "tagline": await S.get(db, "branding.tagline"),
+            # Deliberately public: these credentials exist to be handed out. The accounts are
+            # only seeded when demo mode is on, so this list is empty on a real deployment.
+            "demo_accounts": A.demo_accounts()}
 
 
 @router.post("/signup")

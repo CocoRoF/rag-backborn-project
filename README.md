@@ -59,6 +59,65 @@
 임베딩 키가 없어도 색인과 검색은 동작합니다 — 다섯 축 중 셋은 벡터가 필요 없습니다.
 키를 넣은 뒤 [전체 재색인]을 누르면 의미 검색이 켜집니다.
 
+## 파이프라인 플러그인 — RAG 위에 얹는 "사업" 층
+
+문서에 답하는 것만으로는 사업이 되지 않는다. 기술사업화 프로그램(예: 농진원 AFCI)이 필요로 하는
+것은 문서에서 뽑아낸 **개체**, 방어 가능한 **점수**, 개체 사이의 **연결**, 그리고 그 셋에 서명한
+**사람**이다. 이 백본은 그 네 가지를 위한 자리를 만들어 두고, 각 단계를 플러그인으로 갈아끼운다.
+
+```
+SOURCE  →  ENRICH  →  SCORE  →  MATCH  →  EXPORT
+수집        구조화·분류   평가       매칭      산출물
+DATA      INTELLIGENCE  OPPORTUNITY  MATCHING  DECISION SUPPORT
+```
+
+기본 제공 플러그인 (전부 최소 구현 — 인터페이스가 본체다):
+
+| 단계 | 플러그인 | 하는 일 |
+|---|---|---|
+| SOURCE | `csv_records` | CSV 각 행 → 레코드 (기업목록·수요조사 결과) |
+| SOURCE | `document_records` | 문서 1건 → 레코드 1건 (기술설명서 → 기술 후보) |
+| ENRICH | `llm_extract` | 저장소를 검색해 근거를 모은 뒤 지정 항목(TRL·적용분야…)을 채움 |
+| ENRICH | `taxonomy_classify` | 기술분류체계 라벨 부여 (키워드 규칙 / 모델 판단) |
+| SCORE | `weighted_rubric` | 스코어카드 차원별 0~100 채점 + 가중합 + Long/Short/Core 등급 |
+| MATCH | `semantic_link` | 컬렉션 간 의미 매칭(양방향 옵션) + 선택적 모델 재평가 |
+| EXPORT | `evidence_card` | 점수·근거·매칭을 카드로 묶어 **저장소에 되돌려 넣음**(재색인되어 챗이 인용) |
+
+핵심 데이터 구조:
+
+```
+Collection   기술 / 기업 / 수요 …      — 저장소 안의 명명된 레코드 집합
+Record       개체 하나 + 자유 속성 + 자체 임베딩
+RecordLink   기술 ↔ 기업 매칭 후보 + 근거 + 판정
+Scorecard    평가 차원과 가중치 (Delphi/AHP 로 조정하는 대상이므로 코드가 아닌 행)
+RecordScore  한 레코드 × 한 스코어카드
+ReviewItem   Human-in-the-Loop — 누가 언제 왜 그렇게 판단했는가 (append-only)
+```
+
+**AI 가 만든 것은 전부 `candidate` 로 들어온다.** 사람이 승인해야 상태가 바뀌고, 판단은 지워지지
+않고 검토 이력에 남는다. 재채점하면 이전 승인은 자동으로 무효가 된다 — 새 점수는 사람이 본 적 없는
+새 의견이기 때문이다.
+
+### 플러그인 추가하기
+
+`backend/src/ragb/plugins/` 에 파일 하나를 두고 `register(...)` 를 호출하면 끝이다.
+
+```python
+class PatentApi:
+    spec = PluginSpec(id="patent_api", kind=PluginKind.SOURCE, name="특허 API 수집",
+                      description="...", fields=[ConfigField("query", "검색식", required=True)])
+    async def run(self, ctx: RunContext) -> RunResult: ...
+
+register(PatentApi())
+```
+
+설정 폼은 `fields` 선언에서 자동 생성되고, 실행은 작업 큐를 타고, 로그와 결과는 [파이프라인] 탭에
+그대로 나온다. 다른 곳은 손대지 않는다.
+
+두 가지 규칙만 지키면 된다: **멱등**(안정된 `external_id` 로 upsert — 두 번 돌리기 무서운
+파이프라인은 아무도 돌리지 않는다), 그리고 **근거 없으면 쓰지 않기**(모델이 주장한 것에는 그
+주장이 나온 조각이 함께 달린다).
+
 ## 모델
 
 공개 API로 접근 가능한 것만 지원합니다.
@@ -96,6 +155,15 @@ cd frontend && npm install && npm run dev   # :3000 (→ /api 는 :8130 으로 �
 
 기본 관리자는 `admin@ragb.local` / `admin123` 으로 부팅 시 시드됩니다.
 **첫 로그인 후 반드시 바꾸세요.**
+
+데모 계정(`RAGB_DEMO_MODE=1`, 기본값)은 부팅 시 함께 시드되고 **로그인 화면에 그대로 표시**됩니다.
+공유하라고 만든 계정이라 그렇게 두었습니다. 실제 운영에서는 `RAGB_DEMO_MODE=0` 으로 끄면
+시드도 노출도 사라집니다.
+
+| 계정 | 비밀번호 | 권한 |
+|---|---|---|
+| `admin@smart.lab` | `smartlab123` | 관리자 |
+| `test@smart.lab` | `smatlab123` | 일반 |
 
 ## 배포
 

@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
-from ragb.api import agents, auth, chat, health, internal_mcp, repositories
+from ragb.api import agents, auth, chat, health, intelligence, internal_mcp, repositories
 from ragb.api.admin import router as admin_router
 from ragb.config import get_settings
 from ragb.core.errors import AppError, app_error_handler
@@ -23,10 +23,14 @@ async def lifespan(app: FastAPI):
     s = get_settings()
     s.data_dir.mkdir(parents=True, exist_ok=True)
     s.upload_root.mkdir(parents=True, exist_ok=True)
+    import ragb.plugins  # noqa: F401  (importing registers the shipped plug-ins)
     async with session_scope() as db:
         from ragb.services import accounts, catalog, claude_code
         await catalog.seed(db)
         await accounts.seed_admin(db)
+        seeded = await accounts.seed_demo_accounts(db)
+        if seeded:
+            log.info("demo accounts seeded", count=seeded)
         # A recreated volume loses the CLI login; the backup in system_settings puts it back.
         try:
             if await claude_code.restore_credentials(db):
@@ -44,6 +48,8 @@ app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(repositories.router)
 app.include_router(agents.router)
+app.include_router(intelligence.router)
+app.include_router(intelligence.meta_router)
 app.include_router(chat.router)
 app.include_router(admin_router)
 app.include_router(internal_mcp.router)

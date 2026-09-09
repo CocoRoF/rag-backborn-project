@@ -4,6 +4,8 @@ import { ChevronRight, FileText, Folder, FolderPlus, Plus, RefreshCw, Search, Tr
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { NodeDetail } from "@/components/storage/NodeDetail";
+import { PipelinePanel } from "@/components/storage/PipelinePanel";
+import { RecordsPanel } from "@/components/storage/RecordsPanel";
 import { SearchPanel } from "@/components/storage/SearchPanel";
 import { Badge, Button, Card, Empty, Field, Input, Select, Spinner, Textarea, bytes, when } from "@/components/ui";
 import { ApiError, api, del, get, post } from "@/lib/api";
@@ -15,6 +17,14 @@ const STATUS: Record<string, { tone: "ok" | "warn" | "bad" | "neutral"; label: s
   pending: { tone: "neutral", label: "대기" },
   failed: { tone: "bad", label: "실패" },
 };
+
+type Tab = "files" | "search" | "pipeline" | "records";
+const TABS: { key: Tab; label: string }[] = [
+  { key: "files", label: "파일" },
+  { key: "search", label: "검색 테스트" },
+  { key: "pipeline", label: "파이프라인" },
+  { key: "records", label: "레코드" },
+];
 
 interface NodesResponse {
   repository: Repository;
@@ -30,7 +40,7 @@ export function StorageView() {
   const [tree, setTree] = useState<NodesResponse | null>(null);
   const [parentId, setParentId] = useState<string | null>(null);
   const [selected, setSelected] = useState<StorageNode | null>(null);
-  const [tab, setTab] = useState<"files" | "search">("files");
+  const [tab, setTab] = useState<Tab>("files");
   const [newRepo, setNewRepo] = useState(false);
   const [error, setError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
@@ -157,15 +167,15 @@ export function StorageView() {
             <header className="flex h-12 shrink-0 items-center gap-2 border-b border-line bg-white px-4">
               <span className="text-[14px] font-medium">{repo.name}</span>
               <div className="ml-3 flex gap-1">
-                {(["files", "search"] as const).map((t) => (
-                  <button key={t} onClick={() => setTab(t)}
+                {TABS.map((t) => (
+                  <button key={t.key} onClick={() => setTab(t.key)}
                     className={clsx("rounded-lg px-2.5 py-1 text-[12.5px] font-medium transition-colors",
-                      tab === t ? "bg-accent-soft text-accent" : "text-[#8b949e] hover:bg-muted")}>
-                    {t === "files" ? "파일" : "검색 테스트"}
+                      tab === t.key ? "bg-accent-soft text-accent" : "text-[#8b949e] hover:bg-muted")}>
+                    {t.label}
                   </button>
                 ))}
               </div>
-              <div className="ml-auto flex gap-1.5">
+              <div className={clsx("ml-auto flex gap-1.5", tab !== "files" && "hidden")}>
                 <Button size="sm" variant="outline" onClick={reindex}><RefreshCw className="size-3.5" />전체 재색인</Button>
                 <Button size="sm" variant="outline" onClick={addFolder}><FolderPlus className="size-3.5" />폴더</Button>
                 <Button size="sm" busy={uploading} onClick={() => fileRef.current?.click()}>
@@ -178,6 +188,10 @@ export function StorageView() {
 
             {tab === "search" ? (
               <SearchPanel repoId={repo.id} />
+            ) : tab === "pipeline" ? (
+              <PipelinePanel repoId={repo.id} files={(tree?.items ?? []).filter((n) => n.kind === "file")} />
+            ) : tab === "records" ? (
+              <RecordsPanel repoId={repo.id} />
             ) : (
               <div className="flex min-h-0 flex-1">
                 <div className="min-w-0 flex-1 overflow-y-auto p-4">

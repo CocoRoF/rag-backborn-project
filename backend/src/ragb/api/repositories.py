@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import uuid
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, File, Form, Query, Request, UploadFile
 from fastapi.responses import Response
@@ -15,6 +16,7 @@ from ragb.db.session import get_session
 from ragb.models import Chunk, DocSection, StorageNode, User
 from ragb.providers.embedding import available as embedding_available
 from ragb.services import audit, objectstore, retrieval
+from ragb.services import records as RC
 from ragb.services import settings as S
 from ragb.services import storage as ST
 
@@ -55,6 +57,9 @@ async def create_repository(body: RepoIn, request: Request, user: User = Depends
                             db: AsyncSession = Depends(get_session)):
     repo = await ST.create_repository(db, user, name=body.name, description=body.description,
                                       visibility=body.visibility, settings=body.settings)
+    # A new repository comes with the collections and scorecard a pipeline expects, so the
+    # first plug-in an operator adds has somewhere to write.
+    await RC.ensure_defaults(db, repo)
     audit.record(db, "repository.create", actor_id=user.id, target_type="repository", target_id=repo.id,
                  ip=client_ip(request), meta={"name": repo.name})
     await db.commit()
@@ -215,8 +220,13 @@ async def download(repo_id: uuid.UUID, node_id: uuid.UUID, user: User = Depends(
     if node.kind != "file" or not node.storage_path:
         raise NotFound("파일이 아닙니다", code="not_a_file")
     data = await objectstore.get(node.storage_path)
+    # HTTP headers are latin-1. A Korean filename put straight into Content-Disposition raises
+    # UnicodeEncodeError and every download 500s — so the readable name goes in the RFC 5987
+    # `filename*` parameter and the plain one falls back to ASCII.
+    ascii_name = quote(node.name, safe="") or "file"
     return Response(content=data, media_type=node.mime or "application/octet-stream",
-                    headers={"Content-Disposition": f'attachment; filename="{node.id}{node.name[-8:]}"'})
+                    headers={"Content-Disposition":
+                             f"attachment; filename=\"{node.id}\"; filename*=UTF-8''{ascii_name}"})
 
 
 # ── search preview (the console's own RAG playground) ───────────────────────────

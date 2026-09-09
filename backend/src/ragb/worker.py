@@ -35,6 +35,12 @@ async def _index(db, payload):
     return await index_node(db, uuid.UUID(payload["node_id"]))
 
 
+@handler("plugin.run")
+async def _plugin_run(db, payload):
+    from ragb.services.pipeline import execute
+    return await execute(db, uuid.UUID(payload["run_id"]))
+
+
 async def _tick_maintenance() -> None:
     async with session_scope() as db:
         n = await J.requeue_stale(db, minutes=20)

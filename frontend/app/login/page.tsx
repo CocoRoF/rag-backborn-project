@@ -1,4 +1,5 @@
 "use client";
+import clsx from "clsx";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 
@@ -6,7 +7,11 @@ import { Button, Card, Field, Input } from "@/components/ui";
 import { ApiError, get, markSession, post } from "@/lib/api";
 import { useAuth, type User } from "@/stores/auth";
 
-interface Status { bootstrap_needed: boolean; signup_mode: string; service_name: string; tagline: string }
+interface DemoAccount { email: string; password: string; role: string; label: string }
+interface Status {
+  bootstrap_needed: boolean; signup_mode: string; service_name: string; tagline: string;
+  demo_accounts: DemoAccount[];
+}
 
 function LoginForm() {
   const router = useRouter();
@@ -70,6 +75,31 @@ function LoginForm() {
             {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-[13px] text-red-600">{error}</p>}
             <Button type="submit" busy={busy} className="w-full">{mode === "login" ? "로그인" : "가입하기"}</Button>
           </form>
+          {!!status?.demo_accounts?.length && (
+            <div className="mt-4 border-t border-line pt-4">
+              <p className="mb-2 text-[12px] font-medium text-[#57606a]">데모 계정 — 눌러서 바로 입력</p>
+              <div className="space-y-1.5">
+                {status.demo_accounts.map((a) => (
+                  <button key={a.email} type="button"
+                    onClick={() => { setMode("login"); setEmail(a.email); setPassword(a.password); setError(""); }}
+                    className="flex w-full items-center gap-2 rounded-lg border border-line px-2.5 py-2 text-left transition-colors hover:bg-muted">
+                    <span className={clsx("rounded-full px-2 py-0.5 text-[10.5px] font-medium",
+                      a.role === "admin" ? "bg-accent-soft text-accent" : "bg-muted text-[#57606a]")}>
+                      {a.role === "admin" ? "관리자" : "일반"}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-mono text-[12.5px]">{a.email}</span>
+                      <span className="block truncate font-mono text-[11.5px] text-[#8b949e]">{a.password}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+              <p className="mt-2 text-[11px] leading-relaxed text-[#c1c7cd]">
+                공개 데모용 계정입니다. 실제 운영에서는 <code className="text-[10.5px]">RAGB_DEMO_MODE=0</code> 으로 끄세요.
+              </p>
+            </div>
+          )}
+
           {!status?.bootstrap_needed && status?.signup_mode === "open" && (
             <button onClick={() => { setMode(mode === "login" ? "signup" : "login"); setError(""); }}
               className="mt-3 w-full text-center text-[13px] text-[#8b949e] hover:text-accent">

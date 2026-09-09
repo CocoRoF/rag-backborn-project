@@ -98,6 +98,38 @@ async def seed_admin(db: AsyncSession) -> uuid.UUID | None:
     return user.id
 
 
+def demo_accounts() -> list[dict[str, str]]:
+    """Parsed `email:password:role:label` tuples. Empty when demo mode is off."""
+    s = get_settings()
+    if not s.demo_mode:
+        return []
+    out = []
+    for entry in s.demo_accounts.split(","):
+        parts = [p.strip() for p in entry.split(":")]
+        if len(parts) >= 2 and parts[0] and parts[1]:
+            out.append({"email": parts[0], "password": parts[1],
+                        "role": parts[2] if len(parts) > 2 else "user",
+                        "label": parts[3] if len(parts) > 3 else ""})
+    return out
+
+
+async def seed_demo_accounts(db: AsyncSession) -> int:
+    """Idempotent, and it never touches an existing account — including its password. Someone
+    poking at a demo will change things; the next deploy must not quietly undo that."""
+    created = 0
+    for acc in demo_accounts():
+        email = _normalise_email(acc["email"])
+        if (await db.execute(select(User.id).where(User.email == email))).first() is not None:
+            continue
+        db.add(User(email=email, name=acc["label"] or email.split("@")[0],
+                    password_hash=hash_password(acc["password"]),
+                    role="admin" if acc["role"] == "admin" else "user"))
+        created += 1
+    if created:
+        await db.flush()
+    return created
+
+
 def public_user(user: User) -> dict:
     return {"id": str(user.id), "email": user.email, "name": user.name, "role": user.role,
             "status": user.status, "created_at": user.created_at.isoformat() if user.created_at else None}

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { CalibrationPanel } from "@/components/admin/CalibrationPanel";
 import { LogsPanel } from "@/components/admin/LogsPanel";
+import { PluginsPanel } from "@/components/admin/PluginsPanel";
 import { ProvidersPanel } from "@/components/admin/ProvidersPanel";
 import { Badge, Card, Spinner, bytes } from "@/components/ui";
 import { get, patch } from "@/lib/api";
@@ -12,6 +13,7 @@ const TABS = [
   { key: "overview", label: "개요" },
   { key: "providers", label: "공급자 · 모델" },
   { key: "rag", label: "임베딩 · RAG" },
+  { key: "plugins", label: "플러그인" },
   { key: "users", label: "사용자" },
   { key: "logs", label: "로그" },
 ] as const;
@@ -35,6 +37,7 @@ export function AdminView() {
           {tab === "overview" && <Overview />}
           {tab === "providers" && <ProvidersPanel />}
           {tab === "rag" && <CalibrationPanel />}
+          {tab === "plugins" && <PluginsPanel />}
           {tab === "users" && <Users />}
           {tab === "logs" && <LogsPanel />}
         </div>

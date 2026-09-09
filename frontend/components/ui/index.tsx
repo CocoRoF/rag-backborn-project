@@ -1,7 +1,7 @@
 "use client";
 import clsx from "clsx";
 import { Loader2 } from "lucide-react";
-import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
+import type { ButtonHTMLAttributes, HTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
 
 export function Button({ variant = "primary", size = "md", busy, className, children, ...rest }:
   ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "primary" | "ghost" | "outline" | "danger"; size?: "sm" | "md"; busy?: boolean }) {
@@ -43,8 +43,9 @@ export function Select({ className, children, ...rest }: SelectHTMLAttributes<HT
     "focus:border-accent focus:ring-2 focus:ring-accent-soft", className)}>{children}</select>;
 }
 
-export function Card({ className, children }: { className?: string; children: ReactNode }) {
-  return <div className={clsx("rounded-xl border border-line bg-white", className)}>{children}</div>;
+export function Card({ className, children, ...rest }:
+  { className?: string; children: ReactNode } & HTMLAttributes<HTMLDivElement>) {
+  return <div {...rest} className={clsx("rounded-xl border border-line bg-white", className)}>{children}</div>;
 }
 
 export function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {

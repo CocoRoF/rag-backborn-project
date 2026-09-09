@@ -35,6 +35,16 @@ class Settings(BaseSettings):
     default_admin_name: str = "관리자"
     signup_enabled: bool = True
 
+    # Demo accounts. These are seeded at boot AND printed on the login page, which is only
+    # ever acceptable because they exist to be shared — a demo whose credentials live in a
+    # separate email is a demo nobody opens. Set RAGB_DEMO_MODE=0 on a real deployment and
+    # the accounts are neither seeded nor shown.
+    demo_mode: bool = True
+    demo_accounts: str = (
+        "admin@smart.lab:smartlab123:admin:데모 관리자,"
+        "test@smart.lab:smatlab123:user:데모 사용자"
+    )
+
     claude_home: Path = Path("/root/.claude")
     claude_binary: str = "claude"
     internal_api_url: str = "http://127.0.0.1:8000"
