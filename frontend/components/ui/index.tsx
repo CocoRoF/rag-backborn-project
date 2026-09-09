@@ -10,7 +10,7 @@ export function Button({ variant = "primary", size = "md", busy, className, chil
       {...rest}
       disabled={rest.disabled || busy}
       className={clsx(
-        "inline-flex items-center justify-center gap-1.5 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
+        "inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
         size === "sm" ? "px-2.5 py-1.5 text-[13px]" : "px-3.5 py-2 text-sm",
         variant === "primary" && "bg-accent text-white hover:bg-[#255ad6]",
         variant === "outline" && "border border-line bg-white hover:bg-muted",
